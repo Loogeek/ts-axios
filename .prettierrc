@@ -1,0 +1,12 @@
+{
+  "singleQuote": true,
+  "eslintIntegration": true,
+  "tslintIntegration": true,
+  "quotes": true,
+  "trailingComma": "none",
+  "printWidth": 80,
+  "useTabs": false,
+  "semi": true,
+  "bracketSpacing": true,
+  "arrowParens": "avoid"
+}
