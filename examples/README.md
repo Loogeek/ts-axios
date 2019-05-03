@@ -1,1 +1,0 @@
-ts-axios simple examples
