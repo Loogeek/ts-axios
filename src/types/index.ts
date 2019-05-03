@@ -1,3 +1,5 @@
+import { request } from 'http';
+
 export type Method =
   | 'get'
   | 'GET'
@@ -21,9 +23,10 @@ export interface AxiosRequestConfig {
   params?: any;
   headers?: any;
   responseType?: XMLHttpRequestResponseType;
+  timeout?: number;
 }
 
-export interface AxioResponse {
+export interface AxiosResponse {
   data: any;
   status: number;
   statusText: string;
@@ -32,4 +35,12 @@ export interface AxioResponse {
   request: any;
 }
 
-export interface AxiosPromise extends Promise<AxioResponse> {}
+export interface AxiosPromise extends Promise<AxiosResponse> {}
+
+export interface AxiosError extends Error {
+  config: AxiosRequestConfig;
+  code?: string;
+  request?: any;
+  response?: AxiosResponse;
+  isAxiosError: boolean;
+}

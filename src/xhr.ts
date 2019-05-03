@@ -1,13 +1,25 @@
-import { AxiosRequestConfig, AxioResponse, AxiosPromise } from './types/index';
+import { AxiosRequestConfig, AxiosResponse, AxiosPromise } from './types/index';
 import { parseReponentHeaders } from './helpers/headers';
+import { createError } from './helpers/error';
 
 function xhr(config: AxiosRequestConfig): AxiosPromise {
-  const { url, method = 'GET', data = null, headers, responseType } = config;
-  return new Promise(resolve => {
+  const {
+    url,
+    method = 'GET',
+    data = null,
+    headers,
+    responseType,
+    timeout
+  } = config;
+  return new Promise((resolve, rejects) => {
     const request = new XMLHttpRequest();
 
     if (responseType) {
       request.responseType = responseType;
+    }
+
+    if (timeout) {
+      request.timeout = timeout;
     }
 
     request.open(method.toUpperCase(), url, true);
@@ -22,8 +34,10 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
 
     request.send(data);
 
-    request.onreadystatechange = function handleReqStateChange() {
+    request.onreadystatechange = function handleStateChange() {
       if (request.readyState !== 4) return;
+
+      if (request.status === 0) return;
 
       const responseHeaders = parseReponentHeaders(
         request.getAllResponseHeaders()
@@ -33,7 +47,7 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
           ? request.response
           : request.responseText;
 
-      const response: AxioResponse = {
+      const response: AxiosResponse = {
         data: responseData,
         status: request.status,
         statusText: request.statusText,
@@ -41,7 +55,35 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
         config,
         request
       };
-      resolve(response);
+
+      if (response.status >= 200 && response.status < 300) {
+        resolve(response);
+      } else {
+        rejects(
+          createError(
+            `Request failed with status code ${response.status}`,
+            config,
+            null,
+            request,
+            response
+          )
+        );
+      }
+    };
+
+    request.onerror = function handleError() {
+      rejects(createError('Network Error', config, null, request));
+    };
+
+    request.ontimeout = function handleTimeout() {
+      rejects(
+        createError(
+          `Timeout of ${timeout}ms exceeded`,
+          config,
+          'ECONNABORTED',
+          request
+        )
+      );
     };
   });
 }
