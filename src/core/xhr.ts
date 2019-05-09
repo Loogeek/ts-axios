@@ -1,6 +1,10 @@
-import { AxiosRequestConfig, AxiosResponse, AxiosPromise } from './types/index';
-import { parseReponentHeaders } from './helpers/headers';
-import { createError } from './helpers/error';
+import {
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosPromise
+} from '../types/index';
+import { parseReponentHeaders } from '../helpers/headers';
+import { createError } from '../helpers/error';
 
 function xhr(config: AxiosRequestConfig): AxiosPromise {
   const {
@@ -22,7 +26,7 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
       request.timeout = timeout;
     }
 
-    request.open(method.toUpperCase(), url, true);
+    request.open(method.toUpperCase(), url!, true);
 
     Object.keys(headers).forEach(key => {
       if (data === null && key.toLocaleLowerCase() === 'content-type') {
