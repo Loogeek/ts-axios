@@ -2,35 +2,56 @@ import { AxiosRequestConfig, AxiosPromise, Method } from '../types';
 import dispatchRequest from './dispatchRequest';
 
 export default class Axios {
-  request(config: AxiosRequestConfig): AxiosPromise {
+  request<T = any>(url: any, config?: any): AxiosPromise<T> {
+    if (typeof url === 'string') {
+      if (!config) {
+        config = {};
+      }
+      config.url = url;
+    } else {
+      config = url;
+    }
+
     return dispatchRequest(config);
   }
 
-  get(url: string, config?: AxiosRequestConfig): AxiosPromise {
+  get<T = any>(url: string, config?: AxiosRequestConfig): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'GET', config });
   }
 
-  delete(url: string, config?: AxiosRequestConfig): AxiosPromise {
+  delete<T = any>(url: string, config?: AxiosRequestConfig): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'DELETE', config });
   }
 
-  head(url: string, config?: AxiosRequestConfig): AxiosPromise {
+  head<T = any>(url: string, config?: AxiosRequestConfig): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'HEAD', config });
   }
 
-  options(url: string, config?: AxiosRequestConfig): AxiosPromise {
+  options<T = any>(url: string, config?: AxiosRequestConfig): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'OPTIONS', config });
   }
 
-  post(url: string, data?: any, config?: AxiosRequestConfig): AxiosPromise {
+  post<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'POST', config, data });
   }
 
-  put(url: string, data?: any, config?: AxiosRequestConfig): AxiosPromise {
+  put<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'PUT', config, data });
   }
 
-  patch(url: string, data?: any, config?: AxiosRequestConfig): AxiosPromise {
+  patch<T = any>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): AxiosPromise<T> {
     return this._requestMethod({ url, method: 'PATCH', config, data });
   }
 
