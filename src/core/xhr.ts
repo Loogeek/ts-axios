@@ -4,7 +4,7 @@ import {
   AxiosPromise
 } from '../types/index';
 import { parseReponentHeaders } from '../helpers/headers';
-import { createError } from '../helpers/error';
+import { createError } from './error';
 
 function xhr(config: AxiosRequestConfig): AxiosPromise {
   const {
