@@ -8,6 +8,7 @@ import {
 } from '../types';
 import InterceptorManager from './interceptorManager';
 import dispatchRequest from './dispatchRequest';
+import mergeConfig from './mergeConfig';
 
 interface PromiseChain {
   resolved: ResolvedFn | ((config: AxiosRequestConfig) => AxiosPromise);
@@ -20,9 +21,11 @@ interface Interceptors {
 }
 
 export default class Axios {
+  defaults: AxiosRequestConfig;
   interceptors: Interceptors;
 
-  constructor() {
+  constructor(initConfig: AxiosRequestConfig) {
+    this.defaults = initConfig;
     this.interceptors = {
       request: new InterceptorManager<AxiosRequestConfig>(),
       response: new InterceptorManager<AxiosResponse>()
@@ -39,6 +42,8 @@ export default class Axios {
       config = url;
     }
 
+    config = mergeConfig(this.defaults, config);
+
     const chain: PromiseChain[] = [
       {
         resolved: dispatchRequest,
@@ -47,11 +52,11 @@ export default class Axios {
     ];
 
     this.interceptors.request.forEach(interceptor => {
-      chain.unshift(interceptor);
+      chain.unshift(interceptor); // 请求拦截：先添加后处理
     });
 
     this.interceptors.response.forEach(interceptor => {
-      chain.push(interceptor);
+      chain.push(interceptor); // 响应拦截：先添加先处理
     });
 
     let promise = Promise.resolve(config);

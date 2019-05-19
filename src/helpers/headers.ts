@@ -1,4 +1,5 @@
-import { isPlainObject } from './util';
+import { isPlainObject, deepMerge } from './util';
+import { Method } from '../types';
 
 function normalizeHeaderName(headers: any, normalizeName: string): void {
   if (isPlainObject(headers)) {
@@ -41,4 +42,24 @@ export function parseReponentHeaders(headers: string): Object {
     resHeaders[key] = val;
   });
   return resHeaders;
+}
+
+// 将headers中default的一些参数压到一层
+export function flattenHeaders(headers: any, method: Method): any {
+  if (!headers) return headers;
+
+  headers = deepMerge(headers.common || {}, headers[method] || {}, headers);
+
+  const methodsToDelete = [
+    'delete',
+    'get',
+    'head',
+    'options',
+    'post',
+    'put',
+    'path',
+    'common'
+  ];
+
+  methodsToDelete.forEach(method => delete headers[method]);
 }
