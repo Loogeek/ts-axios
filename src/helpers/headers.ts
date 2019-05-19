@@ -48,7 +48,7 @@ export function parseReponentHeaders(headers: string): Object {
 export function flattenHeaders(headers: any, method: Method): any {
   if (!headers) return headers;
 
-  headers = deepMerge(headers.common || {}, headers[method] || {}, headers);
+  headers = deepMerge(headers.common, headers[method], headers);
 
   const methodsToDelete = [
     'delete',
@@ -57,9 +57,11 @@ export function flattenHeaders(headers: any, method: Method): any {
     'options',
     'post',
     'put',
-    'path',
+    'patch',
     'common'
   ];
 
   methodsToDelete.forEach(method => delete headers[method]);
+
+  return headers;
 }

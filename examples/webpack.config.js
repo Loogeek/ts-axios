@@ -14,6 +14,8 @@ module.exports = {
     return entries;
   }, {}),
 
+  devtool: 'cheap-module-source-map',
+
   /**
    * 根据不同的目录名称，打包生成目标 js，名称和目录名一致
    */

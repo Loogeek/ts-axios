@@ -23,12 +23,11 @@ export function deepMerge(...objs: any[]): any {
     if (obj) {
       Object.keys(obj).forEach(key => {
         const val = obj[key];
-
         if (isPlainObject(val)) {
           if (isPlainObject(result[key])) {
-            deepMerge(result[key], val);
+            result[key] = deepMerge(result[key], val);
           } else {
-            deepMerge(val);
+            result[key] = deepMerge(val);
           }
         } else {
           result[key] = val;
