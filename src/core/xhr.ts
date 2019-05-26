@@ -13,7 +13,8 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
     data = null,
     headers,
     responseType,
-    timeout
+    timeout,
+    cancelToken
   } = config;
   return new Promise((resolve, rejects) => {
     const request = new XMLHttpRequest();
@@ -35,6 +36,13 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
         request.setRequestHeader(key, headers[key]);
       }
     });
+
+    if (cancelToken) {
+      cancelToken.promise.then(reason => {
+        request.abort();
+        rejects(reason);
+      });
+    }
 
     request.send(data);
 
