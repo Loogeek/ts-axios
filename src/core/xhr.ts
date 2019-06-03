@@ -5,6 +5,18 @@ import {
 } from '../types/index';
 import { parseReponentHeaders } from '../helpers/headers';
 import { createError } from './error';
+import { isFormData } from '../helpers/util';
+
+/**
+ * 流程
+ * 1. 创建一个 request 实例。
+ * 2. 执行 request.open 方法初始化。
+ * 3. 执行 configureRequest 配置 request 对象。
+ * 4. 执行 addEvents 给 request 添加事件处理函数。
+ * 5. 执行 processHeaders 处理请求 headers。
+ * 6. 执行 processCancel 处理请求取消逻辑。
+ * 7. 执行 request.send 方法发送请求。
+ */
 
 function xhr(config: AxiosRequestConfig): AxiosPromise {
   const {
@@ -14,60 +26,117 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
     headers,
     responseType,
     timeout,
-    cancelToken
+    cancelToken,
+    withCredentials,
+    onDownloadProgress,
+    onUploadProgress
   } = config;
   return new Promise((resolve, rejects) => {
     const request = new XMLHttpRequest();
-
-    if (responseType) {
-      request.responseType = responseType;
-    }
-
-    if (timeout) {
-      request.timeout = timeout;
-    }
-
     request.open(method.toUpperCase(), url!, true);
 
-    Object.keys(headers).forEach(key => {
-      if (data === null && key.toLocaleLowerCase() === 'content-type') {
-        delete headers[key];
-      } else {
-        request.setRequestHeader(key, headers[key]);
-      }
-    });
+    configureRequest();
 
-    if (cancelToken) {
-      cancelToken.promise.then(reason => {
-        request.abort();
-        rejects(reason);
-      });
-    }
+    addEvents();
+
+    processHeaders();
+
+    processCancel();
 
     request.send(data);
 
-    request.onreadystatechange = function handleStateChange() {
-      if (request.readyState !== 4) return;
+    function configureRequest(): void {
+      if (responseType) {
+        request.responseType = responseType;
+      }
 
-      if (request.status === 0) return;
+      if (timeout) {
+        request.timeout = timeout;
+      }
 
-      const responseHeaders = parseReponentHeaders(
-        request.getAllResponseHeaders()
-      );
-      let responseData =
-        responseType && responseType !== 'text'
-          ? request.response
-          : request.responseText;
+      if (withCredentials) {
+        request.withCredentials = true;
+      }
+    }
 
-      const response: AxiosResponse = {
-        data: responseData,
-        status: request.status,
-        statusText: request.statusText,
-        headers: responseHeaders,
-        config,
-        request
+    function addEvents(): void {
+      if (onDownloadProgress) {
+        request.onprogress = onDownloadProgress;
+      }
+
+      if (onUploadProgress) {
+        request.upload.onprogress = onUploadProgress;
+      }
+
+      request.onreadystatechange = function handleStateChange() {
+        if (request.readyState !== 4) return;
+
+        if (request.status === 0) return;
+
+        const responseHeaders = parseReponentHeaders(
+          request.getAllResponseHeaders()
+        );
+        let responseData =
+          responseType && responseType !== 'text'
+            ? request.response
+            : request.responseText;
+
+        const response: AxiosResponse = {
+          data: responseData,
+          status: request.status,
+          statusText: request.statusText,
+          headers: responseHeaders,
+          config,
+          request
+        };
+
+        handleResponse(response);
       };
 
+      request.onerror = function handleError() {
+        rejects(createError('Network Error', config, null, request));
+      };
+
+      request.ontimeout = function handleTimeout() {
+        rejects(
+          createError(
+            `Timeout of ${timeout}ms exceeded`,
+            config,
+            'ECONNABORTED',
+            request
+          )
+        );
+      };
+    }
+
+    function processHeaders(): void {
+      /**
+       * FormData类型让游览器自动根据数据类型设置Content-type
+       * 如通过FormData上传文件时，游览器会把请求中Content-type设置为multipart/form-data
+       */
+      if (isFormData(data)) {
+        delete headers['Content-type'];
+      }
+
+      Object.keys(headers).forEach(key => {
+        if (data === null && key.toLocaleLowerCase() === 'content-type') {
+          delete headers[key];
+        } else {
+          request.setRequestHeader(key, headers[key]);
+        }
+      });
+    }
+
+    function processCancel(): void {
+      if (cancelToken) {
+        cancelToken.promise.then(reason => {
+          request.abort();
+          rejects(reason);
+        });
+      }
+    }
+
+    function handleResponse(response: AxiosResponse) {
       if (response.status >= 200 && response.status < 300) {
         resolve(response);
       } else {
@@ -81,22 +150,7 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
           )
         );
       }
-    };
-
-    request.onerror = function handleError() {
-      rejects(createError('Network Error', config, null, request));
-    };
-
-    request.ontimeout = function handleTimeout() {
-      rejects(
-        createError(
-          `Timeout of ${timeout}ms exceeded`,
-          config,
-          'ECONNABORTED',
-          request
-        )
-      );
-    };
+    }
   });
 }
 
