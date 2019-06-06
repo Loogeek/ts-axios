@@ -29,7 +29,9 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
     cancelToken,
     withCredentials,
     onDownloadProgress,
-    onUploadProgress
+    onUploadProgress,
+    auth,
+    validateStatus
   } = config;
   return new Promise((resolve, rejects) => {
     const request = new XMLHttpRequest();
@@ -76,18 +78,18 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
         const responseHeaders = parseReponentHeaders(
           request.getAllResponseHeaders()
         );
-        let responseData =
+        const responseData =
           responseType && responseType !== 'text'
             ? request.response
             : request.responseText;
 
         const response: AxiosResponse = {
+          config,
+          request,
           data: responseData,
           status: request.status,
           statusText: request.statusText,
-          headers: responseHeaders,
-          config,
-          request
+          headers: responseHeaders
         };
 
         handleResponse(response);
@@ -118,6 +120,12 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
         delete headers['Content-type'];
       }
 
+      if (auth) {
+        // Basic加密串 username:password base64
+        const val = `${auth.username}:${auth.password}`;
+        headers['Authorization'] = `Basic ${btoa(val)}`;
+      }
+
       Object.keys(headers).forEach(key => {
         if (data === null && key.toLocaleLowerCase() === 'content-type') {
           delete headers[key];
@@ -137,7 +145,7 @@ function xhr(config: AxiosRequestConfig): AxiosPromise {
     }
 
     function handleResponse(response: AxiosResponse) {
-      if (response.status >= 200 && response.status < 300) {
+      if (validateStatus && validateStatus(response.status)) {
         resolve(response);
       } else {
         rejects(

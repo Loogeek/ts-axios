@@ -1,3 +1,9 @@
 {
-  "extends": ["tslint-config-airbnb", "tslint-config-prettier"]
+  "extends": ["tslint-config-airbnb", "tslint-config-prettier"],
+  "rules": {
+    "import-name": false,
+    "no-parameter-reassignment": false,
+    "function-name": false,
+    "object-shorthand-properties-first": false
+  }
 }
